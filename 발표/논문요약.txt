@@ -1,0 +1,63 @@
+정리.
+3. 데이터 표현/분석
+-1)
+movielens dataset 활용예정
+데이터 분석을 위해, 2~5명의 임의의 그룹을 만들고, 
+임의의 그룹의 멤버가 모두 4-5점 이상을 주었다면 1점,
+4~5점 의외의 점수가 매칭되었으면 0점
+매칭된 점수가 없으면 miss
+모든 그룹이 20점 이상은 매칭되어야 한다.
+
+-2)
+그룹 매칭을 통해 3개의 데이터를 가진다
+그룹멤버, 그룹 점수, 그리고 유저 점수.
+-3 분석
+우리는 평균 점수가 해마다 올라가는 것을 발견했음
+사분위수는 그룹이 커질수록 작아지고, 큰 그룹이 멤버간의 이익의 균형을 잡을 수 있다는 것을 보인다.
+
+4. 실험 세팅과 기준
+4-1 실험 환경
+이진 분류인듯->그룹이 아이템을 추천받았을 때 선택하면 positive else negative
+
+The RECALL@K is the fraction of relevant items that have been retrieved
+in the top K recommended items, and NDCG@K takes account the
+item rankings in the recommendation list. All metrics with higher
+values indicate a better model.
+training/validation/testing->7/1/2
+The Python version is 3.7.10, and the PyTorch [8] version is 1.8.1.
+
+4.2 baseline
+The first baseline is the Attentive Group Recommendation (AGREE)
+
+The second baseline is the Group Information Maximization
+
+5 방법 제안
+5.1
+문제 상태
+MDP 정의 부터
+S: s(t)=[g,h(t)]
+g는 그룹 아이디, h(t): 그룹이 탐색된 history를 기록함
+그룹 아이디는 u(t)(유저)와 연결 가능, h(t)는 [𝑖𝑡,1,𝑖𝑡,2, . . . ,𝑖𝑡,𝐾]
+Action 	An action 𝑎𝑡 = [𝑖𝑡,1,𝑖𝑡,2, . . . ,𝑖𝑡,𝐾]
+k는 추천해줄 수 있는 아이템의 수인데 그냥 하면 너무 많으니까 에이전트와 환경이 소통할때 k=1이 되는 것을 이용할 것
+보상
+그룹이 제안된 아이템을 받으면 보상이 1 아니면 0
+The reward will be 𝑟𝑡 = 1, if the recommended item is picked by this group. Otherwise, 𝑟𝑡 = 0.
+전이확률
+환경이 정해줄것
+감쇠인자 모름 
+
+5.2
+환경 시뮬레이터
+이게 유저가 모든 영화를 채운게 아니므로, 영화 평점의 빈칸을 채우기 위해 matrix factorization를 사용할 것.
+a(t)로 s(t)를 예측하는데, 보상이 r(t)로 나온다. 여기서 r(t)>0이면 0, ℎ𝑡+1= [𝑖2, . . . ,𝑖𝑁 , 𝑎𝑡]이고 아니면
+ℎ𝑡+1 = ℎ𝑡 가 된다.  The next state will be 𝑠𝑡+1 = [𝑔, ℎ𝑡+1].
+
+5.3 에이전트
+𝑜 𝑗 = h
+TReLU(Pu𝑗 + b), 𝛼𝑗 = softmax𝑢𝑗 ∈𝑔 (𝑜 𝑗),
+
+이전 그룹 추천자 시스템의 몇 가지 단점을 극복했습니다. LIRD[17]와 비교하여 DRL 프레임워크를 그룹 권장 과제로 일반화한다. 
+그룹을 하나의 사용자로 보는 대신, 우리는 하나의 자기 주의 메커니즘에 의한 각 그룹 구성원의 영향을 고려한다. 
+[1] 및 그룹과 비교IM [9]은 그룹 권고를 MDP로 공식화함으로써 데이터의 시간 구조가 중요한 역할을 할 수 있는 작업의 동적 특성을 학습할 수 있다. 
+이 개선된 알고리즘을 통해 DRGR은 이전 그룹 추천 시스템 기준선[1, 9]과 유사한 결과를 얻을 수 있다.
