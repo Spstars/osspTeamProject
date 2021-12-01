@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-from db_connection.connection import load_to_db
+from db_connection.connection import load_to_db, get_df
 
-movies = pd.read_csv('D:/osspTeamProject/data/ml-25m.csv', converters={"genres": lambda x: x.replace("'", "").strip("[]").split(", ")})
+movies = get_df('movies')
 
 # genre -> one-hot encoding, as a dataframe
-genre_list = movies.genres
+genre_list = movies.genres.apply(lambda x: x.replace("'", "").strip("[]").split(", "))
 genre_set = sorted(list(set([genre[i] for genre in genre_list for i in range(len(genre))])))
 genre_encoding = []  # one-hot encoding
 
@@ -23,7 +23,7 @@ genre_encoding = np.array(genre_encoding)  # 배열로 변환
 genres = pd.DataFrame(data=genre_encoding, columns=genre_set)
 genres.set_index(movies.movieId, inplace=True)
 
-ratings = pd.read_csv('D:/osspTeamProject/data/ratings.csv')
+ratings = get_df('ratings')
 ratings.rating = ratings.rating.apply(lambda x: 1 if x >= 4.5 else 0)
 ratings.rename(columns={'rating': 'is_click'}, inplace=True)
 
