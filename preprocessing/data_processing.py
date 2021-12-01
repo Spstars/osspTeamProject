@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
+from db_connection.connection import load_to_db
 
-
-movies = pd.read_csv('ml-25m.csv', converters={"genres": lambda x: x.replace("'", "").strip("[]").split(", ")})
+movies = pd.read_csv('D:/osspTeamProject/data/ml-25m.csv', converters={"genres": lambda x: x.replace("'", "").strip("[]").split(", ")})
 
 # genre -> one-hot encoding, as a dataframe
 genre_list = movies.genres
@@ -23,7 +23,7 @@ genre_encoding = np.array(genre_encoding)  # 배열로 변환
 genres = pd.DataFrame(data=genre_encoding, columns=genre_set)
 genres.set_index(movies.movieId, inplace=True)
 
-ratings = pd.read_csv('ratings.csv')
+ratings = pd.read_csv('D:/osspTeamProject/data/ratings.csv')
 ratings.rating = ratings.rating.apply(lambda x: 1 if x >= 4.5 else 0)
 ratings.rename(columns={'rating': 'is_click'}, inplace=True)
 
@@ -40,4 +40,4 @@ total = total[new_col]
 total.sort_values(by=['userId', 'timestamp'], ascending=True, inplace=True)
 total.reset_index(drop=True, inplace=True)
 
-total.to_csv('data.csv', index=False)
+load_to_db(total, 'data')
