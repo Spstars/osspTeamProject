@@ -42,7 +42,7 @@ def multithread_compute_vali(config, valid_data, model):
     return valid_sum[0] / valid_cnt, valid_sum[1] / valid_cnt, valid_sum[2] / valid_cnt
 
 
-lock = threading.Lock()
+lock = threading.Lock() # 해당 쓰레드만 공유 데이터에 접근할 수 있도록
 
 
 def valid_eval(xx, ii, config, valid_data, model):
@@ -56,12 +56,12 @@ def valid_eval(xx, ii, config, valid_data, model):
     with torch.no_grad():
         _, _, _, loss_sum, precision_1_sum, precision_2_sum, event_cnt = model(valid_data, index=ii)
 
-    lock.acquire()
+    lock.acquire() # 잠금
     valid_sum[0] += loss_sum
     valid_sum[1] += precision_1_sum
     valid_sum[2] += precision_2_sum
     valid_cnt += event_cnt
-    lock.release()
+    lock.release() # 해제
 
 
 lock = threading.Lock()
@@ -144,7 +144,7 @@ def main(config):
     # optimizer = optim.Adam(
     #   [{'params': model.parameters(), 'lr': config['learning_rate']}])
 
-    optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'], betas=(0.5, 0.999))
+    optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'], betas=(0.5, 0.999)) # Adam optimizer 사
 
     best_metric = [100000.0, 0.0, 0.0]
 
@@ -159,7 +159,7 @@ def main(config):
         # model.train()
         for p in model.parameters():
             p.requires_grad = True
-        model.zero_grad()
+        model.zero_grad() # 가중치 초기화
 
         training_user_nos = np.random.choice(dataset.train_user, config['batch_size'], replace=False)
 
@@ -169,10 +169,10 @@ def main(config):
 
         # for batch_id, batch in enumerate(tqdm(training_dataloader)): # the original code does not iterate over entire batch , so change this one
 
-        loss, _, _, _, _, _, _ = model(training_user, is_train=True) # 여기서 뭔가 안됨
+        loss, _, _, _, _, _, _ = model(training_user, is_train=True)
         # print ("the loss is",loss)
 
-        loss.backward()
+        loss.backward() # 
         optimizer.step()
 
         if np.mod(i, 10) == 0:
