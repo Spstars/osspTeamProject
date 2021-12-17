@@ -89,9 +89,9 @@ class Dataset(object):
             self.feature.append(feat_arr)
 
         del user
-        self.max_disp_size = k_max # 최대로 보여진 횟
+        self.max_disp_size = k_max # 최대로 보여진 횟수
 
-    def random_split_user(self):  # resplit용, train, valid, test 셋 다시 나눔
+    def random_split_user(self):  # resplit용, train, valid, test set 다시 나눔 (config 안 쓰임)
         num_users = len(self.train_user) + len(self.valid_user) + len(self.test_user)
         shuffle_order = np.arange(num_users)
         np.random.shuffle(shuffle_order)
