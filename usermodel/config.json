@@ -1,0 +1,1 @@
+{"data_folder": "", "dataset": "data.csv", "save_dir": "./save_dir", "resplit": false, "num_thread": 10, "learning_rate": 0.001, "batch_size": 32, "num_itrs": 10000, "pw_dim": 4, "pw_band_size": 20, "dims": "64-64"}
