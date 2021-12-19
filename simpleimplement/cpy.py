@@ -142,10 +142,6 @@ class Dataset(object):
             #user_set = [703]
             for u in user_set:
                 t_indice = []
-               #
-
-
-
                # print(self.data_time[u]-1)
                 for kk in xrange(min(self.band_size-1, self.data_time[u]-1)):
                     t_indice += map(lambda x: [x + kk+1 + sec_cnt_x, x + sec_cnt_x], np.arange(self.data_time[u] - (kk+1)))
@@ -260,7 +256,7 @@ class UserModelPW(nn.Module):
         self.lr = 0.001
         self.pw_dim = 4
         self.band_size = 20
-        self.mlp_model = self.mlp(19760, self.hidden_dims, 1, 1e-3, act_last=False)
+        self.mlp_model = self.mlp(19760, self.hidden_dims, 1, 1000, act_last=False)
 
     def mlp(self, x_shape, hidden_dims, output_dim, sd, act_last=False):
         hidden_dims = tuple(map(int, hidden_dims.split("-")))
@@ -331,22 +327,24 @@ class UserModelPW(nn.Module):
             # print ("cumsum_tril_matrix",cumsum_tril_matrix)
             # print ("Xs_clicked",Xs_clicked.dtype)
             # feature 행렬곱하는 부분
+            print(cumsum_tril_matrix.shape)
+            print((Xs_clicked.to(dtype=torch.float64)).shape)
 
             click_history[ii] = torch.matmul(cumsum_tril_matrix,
                                              Xs_clicked.to(dtype=torch.float64))  # Xs_clicked: section by _f_dim
 
         concat_history = torch.cat(click_history, axis=1)
-     #   print(concat_history)
+       # print(concat_history.shape)
         disp_history_feature = concat_history[disp_2d_split_sec_ind]
-
+        #pw_dim 만큼 반복, 3952의 feature벡터가 있고, pw_dim을 4로했음 그런다음 feature를 한줄로, 그다음 추가된 feature를 더해서 한줄로.
         # (4) combine features
         concat_disp_features = torch.reshape(torch.cat([disp_history_feature, disp_current_feature], axis=1),
                                              [-1, self.f_dim * self.pw_dim + self.f_dim])
       #  print(len(concat_disp_features))
        # print(concat_disp_features.shape)
         # (5) compute utility
-        # print ("the in pu t shape s ",concat_disp_features.shape)
-        # reward
+        # print ("the in put shape s ",concat_disp_features.shape)
+        # reward,보상
         u_disp = self.mlp_model(concat_disp_features.float())
         # net.apply(init_weights,sdv)
         # (5)
@@ -362,7 +360,9 @@ class UserModelPW(nn.Module):
         # print ("denseshape",denseshape)
         click_tensor = torch.sparse.FloatTensor(click_indices.t(), click_values, denseshape).to_dense()
         click_cnt = click_tensor.sum(1)
+        #유저
         loss_sum = torch.sum(- sum_click_u_bar_ut + torch.log(sum_exp_disp_ubar_ut + 1))
+        #클릭의 총합, 평점을 준 횟수의 총합
         event_cnt = torch.sum(click_cnt)
         loss = loss_sum / event_cnt
 
@@ -373,10 +373,13 @@ class UserModelPW(nn.Module):
         # 최고 2개 리턴
         top_2_disp = torch.topk(dense_exp_disp_util, k=2, sorted=False)[1]
 
-        # print ("argmax_click",argmax_click.shape)
-        # #print ("argmax_disp",argmax_disp)
-        # print ("top_2_disp",top_2_disp.shape)
-        # sys.exit()
+        print ("argmax_click",argmax_click.shape)
+        #print ("argmax_disp",argmax_disp)
+        # for top in top_2_disp:
+        #     print ("top_2_disp : " ,top)
+        
+       # sys.exit()
+        #동등 계산
         precision_1_sum = torch.sum((torch.eq(argmax_click, argmax_disp)))
         precision_1 = precision_1_sum / event_cnt
 
@@ -557,9 +560,9 @@ def main():
     if not os.path.exists(vali_path):
         os.makedirs(vali_path)
 
-    for i in xrange(2000):
+    for i in xrange(10):
 
-        #데이터 학습 qnetwork 학습
+        #데이터 학습 usermodel 학습
         # model.train()
         for p in model.parameters():
             p.requires_grad = True
@@ -572,7 +575,7 @@ def main():
             p.data.clamp_(-1e0, 1e0)
 
         loss, _, _, _, _, _, _ = model(training_user, is_train=True)
-        # print ("the loss is",loss)
+        print ("the loss is",loss)
 
         loss.backward()
         optimizer.step()
